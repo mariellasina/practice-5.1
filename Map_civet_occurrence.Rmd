@@ -1,0 +1,84 @@
+---
+title: "Civet occurrence in Taiwan"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Paguma larvata is the scientific name of the Masked palm civet, which lives throughout Taiwan. We import the occurrence data (Human observation) available at the Global Biodiversity Information Facility (https://www.gbif.org/) using the rgbif package.
+
+```{r,  eval=T}
+library(rgbif)
+library(maps)
+library(sf)
+library(geodata)
+library(ggplot2)
+library(ggspatial)
+library(leaflet)
+library(dplyr)
+```
+
+
+```{r}
+gbif_civet<-occ_search(scientificName="Paguma larvata", hasCoordinate=T, basisOfRecord='HUMAN_OBSERVATION', limit=1000)
+gbif_civet<-gbif_civet$data
+```
+Check the datum is WGS84
+
+```{r}
+str(gbif_civet)
+```
+
+It seems it is but just in case we transform the data set to an sf object so we can make sure the map and the points share the same projection.
+
+```{r}
+civet_sf <- st_as_sf(gbif_civet, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)
+```
+
+Now we can transform CRS to EPSG:4326
+
+```{r}
+civet_sf <- st_transform(civet_sf, crs = 4326)
+```
+
+And we check the projection of the civet_sf object:
+
+```{r}
+st_crs(civet_sf)
+```
+
+
+Then we map the occurrence data.
+```{r}
+maps::map('world',xlim=c(119,123), ylim=c(21,26))
+points(gbif_civet$decimalLongitude, gbif_civet$decimalLatitude, col='blue',  pch=19)
+```
+
+
+Filter out the points that are outside of the territory of Taiwan:
+```{r}
+civet_sf <- civet_sf %>%
+  filter(st_coordinates(.)[, 1] >= 119 & st_coordinates(.)[, 1] <= 122.5 &
+         st_coordinates(.)[, 2] >= 21.5 & st_coordinates(.)[, 2] <= 25.5)
+```
+
+
+
+Or do an interactive map
+
+```{r}
+leaflet(data = civet_sf) %>%
+  addProviderTiles("CartoDB.Positron") %>%  
+  addCircleMarkers(
+    ~st_coordinates(geometry)[, 1], ~st_coordinates(geometry)[, 2],  
+    radius = 4,
+    color = "blue",
+    fillOpacity = 0.7,
+    popup = ~paste("Location:", name)  
+  ) %>%
+  setView(lng = 121, lat = 23.5, zoom = 7)  
+```
+
