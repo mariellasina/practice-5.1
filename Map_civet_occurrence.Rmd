@@ -7,7 +7,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-
 Paguma larvata is the scientific name of the Masked palm civet, which lives throughout Taiwan. We import the occurrence data (Human observation) available at the Global Biodiversity Information Facility (https://www.gbif.org/) using the rgbif package.
 
 ```{r,  eval=T}
